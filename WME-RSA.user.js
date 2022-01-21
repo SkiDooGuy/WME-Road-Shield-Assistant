@@ -507,7 +507,13 @@ const RoadAbbr = {
             'I-': 5,
             'US-': 6,
             "SH-": 2117,
-            "SR-": 2117
+            "SR-": 2117,
+            "FM-": 2121,
+            "Beltway ": 2119,
+            "Loop ": 2122,
+            "Park Rd ": 2144,
+            "Recreational Rd ": 2125,
+            "Spur ": 2126		
         },
         "Utah": {
             'I-': 5,
