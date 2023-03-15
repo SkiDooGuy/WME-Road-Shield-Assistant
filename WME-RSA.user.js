@@ -1005,7 +1005,7 @@ function initRSA() {
     const $rsaFixWrapper = $('<div id="rsa-autoWrapper" class="toolbar-button ItemInactive" style="display:none;margin-right:5px;">');
     const $rsaFixInner = $('<div class="group-title toolbar-top-level-item-title rsa" style="margin:5px 0 0 15px;font-size:12px;">RSA Fix</div>');
 
-    new WazeWrap.Interface.Tab('RSA', $rsaTab.html, setupOptions);
+    WazeWrap.Interface.Tab('RSA', $rsaTab.html, setupOptions);
     $(`<style type="text/css">${rsaCss}</style>`).appendTo('head');
     // $($rsaFixInner).appendTo($rsaFixWrapper);
     // $($rsaFixWrapper).appendTo($('#primary-toolbar > div'));
