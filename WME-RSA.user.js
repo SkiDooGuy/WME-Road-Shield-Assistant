@@ -657,6 +657,10 @@ const Strings = {
         'HighlightHead': 'Highlights',
         'HighlightColors': 'Highlight Colors',
         'ShowRamps': 'Include Ramps',
+        'Experimental': 'Experimental Features (Use at Your own Risk)',
+        'AlternativeShields': 'Alternative Name Shields',
+        'AlternativePrimaryCity': 'Alternative Street with Primary City',
+        'AlternativeNoCity': 'Alternative Street with No City',
         'mHPlus': 'Only show on minor highways or greater',
         'titleCase': 'Segments/nodes with direction not in large-and-small-caps format',
         'TitleCaseClr': 'Segments/nodes with direction not in large-and-small-caps format',
@@ -694,6 +698,10 @@ const Strings = {
         'HighlightHead': 'Highlights',
         'HighlightColors': 'Highlight Colors',
         'ShowRamps': 'Include Ramps',
+        'Experimental': 'Experimental Features (Unstable use at Your own Risk)',
+        'AlternativeShields': 'Alternative Name Shields',
+        'AlternativePrimaryCity': 'Alternative Street with Primary City',
+        'AlternativeNoCity': 'Alternative Street with No City',
         'mHPlus': 'Only show on minor highways or greater',
         'titleCase': 'Segments/nodes with direction not in large-and-small-caps format',
         'TitleCaseClr': 'Segments/nodes with direction not in large-and-small-caps format',
@@ -825,6 +833,7 @@ let SetTurn;
 let rsaMapLayer;
 let rsaIconLayer;
 let LANG;
+let alternativeType
 
 console.log('RSA: initializing...');
 
@@ -959,7 +968,6 @@ function initRSA() {
                     <label class='rsa-label' for='rsa-SegShieldError'><span id='rsa-text-SegShieldError'></span></label>
                 </div>
             </div>
-
             <span id='rsa-text-HighlightColors' class='rsa-header'></span>
             <div style='border-top:2px solid black;'>
                 <div class='rsa-option-container'>
@@ -999,6 +1007,21 @@ function initRSA() {
                     <label class='rsa-label' for='rsa-TitleCaseSftClr'><span id='rsa-text-TitleCaseSftClr'></span></label>
                 </div>
             </div>
+            <span id='rsa-text-Experimental' class='rsa-header'></span>
+            <div style='border-top:2px solid black;'>
+                <div class='rsa-option-container'>
+                    <input type=checkbox class='rsa-checkbox' id='rsa-AlternativeShields' />
+                    <label class='rsa-label' for='rsa-AlternativeShields'><span id='rsa-text-AlternativeShields'></span></label>
+                </div>
+                <div class='rsa-option-container sub'>
+                    <input type=radio class='rsa-checkbox' value='AlternativePrimaryCity' name='AlternativeShields' id='rsa-AlternativePrimaryCity' checked/>
+                    <label class='rsa-label' for='rsa-AlternativePrimaryCity'><span id='rsa-text-AlternativePrimaryCity'></span></label>
+                </div>
+                <div class='rsa-option-container sub'>
+                    <input type=radio class='rsa-checkbox' value='AlternativeNoCity' name='AlternativeShields' id='rsa-AlternativeNoCity' />
+                    <label class='rsa-label' for='rsa-AlternativeNoCity'><span id='rsa-text-AlternativeNoCity'></span></label>
+                </div>
+            </div>
 
             <div style='border-top:2px solid black;'>
                 <div class='rsa-option-container'>
@@ -1031,6 +1054,24 @@ async function setupOptions() {
     W.map.addLayer(rsaIconLayer);
     rsaIconLayer.setVisibility(true);
 
+    function processAlternativeSettings() {
+        if(rsaSettings.AlternativeShields) {
+            $('#rsa-AlternativePrimaryCity').prop('disabled', false);
+            $('#rsa-AlternativeNoCity').prop('disabled', false);
+            let primaryCityButton = $('#rsa-AlternativePrimaryCity')[0];
+            let noCityButton = $('#rsa-AlternativeNoCity')[0]
+            if(primaryCityButton.checked) {
+                alternativeType = primaryCityButton.value;
+            }
+            if(noCityButton.checked) {
+                alternativeType = noCityButton.value;
+            }
+        }
+        if(!rsaSettings.AlternativeShields) {
+            $('#rsa-AlternativePrimaryCity').prop('disabled', true);
+            $('#rsa-AlternativeNoCity').prop('disabled', true);
+        }
+    }
     // Set user options
     function setEleStatus() {
         setChecked('rsa-enableScript', rsaSettings.enableScript);
@@ -1054,6 +1095,7 @@ async function setupOptions() {
         setChecked('rsa-checkTWD', rsaSettings.checkTWD);
         setChecked('rsa-checkTTS', rsaSettings.checkTTS);
         setChecked('rsa-checkVI', rsaSettings.checkVI);
+        setChecked('rsa-AlternativeShields', rsaSettings.AlternativeShields);
         setValue('rsa-HighSegClr', rsaSettings.HighSegClr);
         setValue('rsa-MissSegClr', rsaSettings.MissSegClr);
         setValue('rsa-ErrSegClr', rsaSettings.ErrSegClr);
@@ -1063,6 +1105,10 @@ async function setupOptions() {
         setValue('rsa-SegInvDirClr', rsaSettings.SegInvDirClr);
         setValue('rsa-TitleCaseClr', rsaSettings.TitleCaseClr);
         setValue('rsa-TitleCaseSftClr', rsaSettings.TitleCaseSftClr);
+
+        $('#rsa-AlternativeShields').on('change', function(e) {
+            processAlternativeSettings();
+        })
 
         if (rsaSettings.titleCase === true && W.model.getTopCountry().attributes.id === 235) {
             $('#rsa-container-checkTWD').css('display', 'block');
@@ -1097,11 +1143,18 @@ async function setupOptions() {
 
     setEleStatus();
 
+    $('input[type=radio][name=AlternativeShields]').on('change', function() {
+        processAlternativeSettings();
+        saveSettings();
+        removeHighlights();
+        tryScan();
+    })
+
     $('.rsa-checkbox').on("change",function () {
         let settingName = $(this)[0].id.substring(4);
         rsaSettings[settingName] = this.checked;
 
-        // Check to ensure highlight nodes and show node shields don't onverlap each other
+        // Check to ensure highlight nodes and show node shields don't overlap each other
         // if (settingName = 'ShowNodeShields') {
         //     if (this.checked) {
         //         $('rsa-HighNodeShields').prop('checked', false);
@@ -1113,9 +1166,8 @@ async function setupOptions() {
         //         rsaSettings.ShowNodeShields = false;
         //     }
         // }
-
+        if(settingName === 'AlternativeShields') processAlternativeSettings();
         saveSettings();
-
         removeHighlights();
         tryScan();
     });
@@ -1166,7 +1218,17 @@ async function setupOptions() {
             HighNodeClr: '#ff00bf',
             MissNodeClr: '#ff0000',
             SegHasDirClr: '#ffff00',
-            SegInvDirClr: '#66ffff'
+            SegInvDirClr: '#66ffff',
+            TitleCaseClr: '#ff9933',
+            TitleCaseSftClr: '#ffff66',
+            ShowRamps: true,
+            AlternativeShields: false,
+            mHPlus: false,
+            titleCase: false,
+            checkTWD: false,
+            checkTTS: false,
+            checkVI: false
+
         }
 
         rsaSettings = defaultSettings;
@@ -1219,6 +1281,7 @@ async function loadSettings() {
         TitleCaseClr: '#ff9933',
         TitleCaseSftClr: '#ffff66',
         ShowRamps: true,
+        AlternativeShields: false,
         mHPlus: false,
         titleCase: false,
         checkTWD: false,
@@ -1241,6 +1304,7 @@ async function loadSettings() {
             rsaSettings[funcProp] = defaultSettings[funcProp];
         }
     });
+
 }
 
 async function saveSettings() {
@@ -1270,6 +1334,7 @@ async function saveSettings() {
         TitleCaseClr,
         TitleCaseSftClr,
         ShowRamps,
+        AlternativeShields,
         mHPlus,
         titleCase,
         checkTWD,
@@ -1305,6 +1370,7 @@ async function saveSettings() {
         TitleCaseClr,
         TitleCaseSftClr,
         ShowRamps,
+        AlternativeShields,
         mHPlus,
         titleCase,
         checkTWD,
@@ -1530,10 +1596,31 @@ function tryScan() {
 function processSeg(seg) {
     if(seg === null) return;
     let segAtt = seg.attributes;
-    let street = W.model.streets.getObjectById(segAtt.primaryStreetID).attributes;
-    let hasShield = street.signType !== null;
-
+    let streetID = segAtt.primaryStreetID;
+    let street = W.model.streets.getObjectById(streetID).attributes;
     let cityID = W.model.cities.getObjectById(street.cityID).attributes;
+
+    if(rsaSettings.AlternativeShields) {
+        if(segAtt.streetIDs.length > 0) {
+            for(let i = 0 ; i < segAtt.streetIDs.length; ++i) {
+                let altStreet = W.model.streets.getObjectById(segAtt.streetIDs[i]).attributes;
+                if(alternativeType === 'AlternativePrimaryCity') {
+                    if(street.cityID === altStreet.cityID) {
+                        street = altStreet;
+                        break;
+                    }
+                }
+                else if(alternativeType === 'AlternativeNoCity') {
+                    let altCity = W.model.cities.getObjectById(altStreet.cityID).attributes;
+                    if(altCity.name === '') {
+                        street = altStreet;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    let hasShield = street.signType !== null;
     let stateName = W.model.states.getObjectById(cityID.stateID).attributes.name;
     let countryID = cityID.countryID;
     let candidate = isSegmentCandidate(segAtt, stateName, countryID);
