@@ -1561,7 +1561,7 @@ function removeAutoFixButton() {
 }
 
 function addShieldClick() {
-    const selFea = W.selectionManager.getSelectedFeatures();
+    const selFea = W.selectionManager.getSelectedWMEFeatures();
     if (selFea && selFea.length === 1 && selFea[0].WW.getType() === 'segment') {
         $('.add-new-road-shield').trigger("click");
     } else {
@@ -1594,7 +1594,7 @@ function tryScan() {
     }
 
     removeHighlights();
-    // let selFea = W.selectionManager.getSelectedFeatures();
+    // let selFea = W.selectionManager.getSelectedWMEFeatures();
     // Scan all segments on screen
     if (rsaSettings.ShowSegShields || rsaSettings.SegShieldMissing || rsaSettings.SegShieldError || rsaSettings.HighSegShields || rsaSettings.titleCase) {
         _.each(W.model.segments.getObjectArray(), s => {
